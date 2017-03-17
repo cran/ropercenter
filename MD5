@@ -1,0 +1,13 @@
+b9fc24dbaede8e56387ae4cc526224a3 *DESCRIPTION
+23b62b955b17a01be9b85d503535056d *LICENSE
+5ce1784b379aa709e7f0a8f925eb6401 *NAMESPACE
+96e1dff4835bb1105072e6f90269b77c *NEWS.md
+fbc723ec59e3fb92e50e0751609f25f6 *R/roper_download.R
+44763a29d1fa9360a8755c2e25a98c3b *README.md
+c47f04c2a27c9da7991aeb3c44b2dad3 *build/vignette.rds
+8e5fbe96150ecf7de57a682313132796 *inst/doc/ropercenter-vignette.R
+24ecfdd2a9cf4abd1e714c6b9472b243 *inst/doc/ropercenter-vignette.Rmd
+1c1b727be211eae77f2daa634b96f719 *inst/doc/ropercenter-vignette.html
+6ca19b60dd7f3724e489b938f45af33b *man/roper_download.Rd
+eee8a95f9850dd41b2ed6e14ada10aa7 *vignettes/roper_orccnn.png
+24ecfdd2a9cf4abd1e714c6b9472b243 *vignettes/ropercenter-vignette.Rmd
