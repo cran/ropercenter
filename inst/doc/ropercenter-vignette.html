@@ -12,7 +12,7 @@
 
 <meta name="author" content="Frederick Solt" />
 
-<meta name="date" content="2020-07-21" />
+<meta name="date" content="2020-07-26" />
 
 <title>ropercenter: Reproducible Retrieval of Roper Center Datasets</title>
 
@@ -319,7 +319,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">ropercenter: Reproducible Retrieval of Roper Center Datasets</h1>
 <h4 class="author">Frederick Solt</h4>
-<h4 class="date">2020-07-21</h4>
+<h4 class="date">2020-07-26</h4>
 
 
 
@@ -328,7 +328,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Please remember that by using Roper Center services, you accept all of the Center’s <a href="https://ropercenter.cornell.edu/roper-center-data-archive-terms-and-conditions">Terms and Conditions</a>.</p>
 <div id="setup" class="section level2">
 <h2>Setup</h2>
-<p>The <code>ropercenter</code> package interacts with the Roper Center website using the latest version of the Chrome browser. <a href="https://www.google.com/chrome/">Get (or update) Chrome here</a>.</p>
+<p>The <code>ropercenter</code> package interacts with the Roper Center website using the beta version of the Chrome browser. <a href="https://www.google.com/chrome/beta/">Get the Chrome beta here</a>.</p>
 <p>When used interactively, the <code>roper_download</code> function will ask for the login information required by the Roper Center: the registered user’s affiliation, email, and password. After that information is input once, it will be entered automatically for any other download requests made in the same session. To change this contact information within a session, one may set the argument <code>reset</code> to <code>TRUE</code> when running <code>roper_download</code> again, and the function will again request the required information.</p>
 <p>An optional, but highly recommended, setup step is to add the information the Roper Center requires to your <a href="http://www.statmethods.net/interface/customizing.html">.Rprofile</a> as in the following example:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">options</span>(<span class="st">&quot;roper_email&quot;</span> =<span class="st"> &quot;juanita-herrera@uppermidwest.edu&quot;</span>,</span>

@@ -1,8 +1,8 @@
 Package: ropercenter
 Type: Package
 Title: Reproducible Data Retrieval from the Roper Center Data Archive
-Version: 0.3.0
-Date: 2020-08-18
+Version: 0.3.1
+Date: 2020-08-26
 Authors@R: c(
     person("Frederick", "Solt", email = "frederick-solt@uiowa.edu", role = c("aut", "cre", "cph")),
     person("Jennifer", "Lin", email = "jenniferlin2025@u.northwestern.edu", role = c("ctb")),
@@ -28,10 +28,10 @@ Imports: RSelenium, dplyr, foreign, haven, magrittr, readr, rio,
 Encoding: UTF-8
 RoxygenNote: 7.1.0
 NeedsCompilation: no
-Packaged: 2020-07-21 14:27:11 UTC; fredsolt
+Packaged: 2020-07-26 14:24:31 UTC; fredsolt
 Author: Frederick Solt [aut, cre, cph],
   Jennifer Lin [ctb],
   Paul Gronke [ctb]
 Maintainer: Frederick Solt <frederick-solt@uiowa.edu>
 Repository: CRAN
-Date/Publication: 2020-07-21 14:50:02 UTC
+Date/Publication: 2020-07-26 23:10:06 UTC
