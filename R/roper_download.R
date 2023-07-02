@@ -47,6 +47,8 @@
 #' @importFrom rio export
 #' @importFrom haven read_dta read_por
 #' @importFrom foreign read.spss
+#' @importFrom netstat free_port
+#' @importFrom stats rnorm
 #' 
 #' @export
 roper_download <- function(file_id,
@@ -85,7 +87,7 @@ roper_download <- function(file_id,
     password <- getOption("roper_password")
   }
   
-  # build path to chrome's default download directory
+  # build path to firefox's default download directory
   if (Sys.info()[["sysname"]]=="Linux") {
     default_dir <- file.path("home", Sys.info()[["user"]], "Downloads")
   } else {
@@ -97,20 +99,25 @@ roper_download <- function(file_id,
   
   # initialize driver
   if (msg) message("Initializing RSelenium driver")
-  rD <- RSelenium::rsDriver(browser = "chrome", verbose = TRUE)
-  remDr <- rD[["client"]]
+  rD <- rsDriver(browser="firefox", 
+                       port = free_port(),
+                       verbose = FALSE,
+                       chromever = NULL)
+  remDr <- rD$client
   
   # sign in
   signin <- "https://ropercenter.cornell.edu/ipoll/login"
   remDr$navigate(signin)
   Sys.sleep(delay)
-  if (try(unlist(remDr$findElement(using = "class", "accept-container")$getElementAttribute('id')), silent = TRUE) == "") { # check for cookies pop-up
-    remDr$findElement(using = "class", "accept-container")$clickElement() # accept cookies 
-  }
+
   remDr$findElement(using = "id", "react-select-2-input")$sendKeysToElement(list(affiliation, key = "enter"))
   remDr$findElement(using = "id", "username")$sendKeysToElement(list(email))
   remDr$findElement(using = "id", "password")$sendKeysToElement(list(password))
-  remDr$findElement(using = "css", ".btn-primary")$clickElement()
+  remDr$findElement(using = "css", ".btn.btn-primary.float-right")$clickElement()
+  if (try(unlist(remDr$findElement(using = "class", "accept-container")$getElementAttribute('id')), silent = TRUE) == "") { # check for cookies pop-up
+    remDr$findElement(using = "css", ".accept-container .btn-primary")$clickElement() # accept cookies 
+  }  
+  
   Sys.sleep(delay)
   
   # Loop through files
@@ -125,6 +132,9 @@ roper_download <- function(file_id,
     url <- paste0("https://ropercenter.cornell.edu/ipoll/study/", item)
     remDr$navigate(url)
     Sys.sleep(delay)
+    if (try(unlist(remDr$findElement(using = "class", "accept-container")$getElementAttribute('id')), silent = TRUE) == "") { # check for cookies pop-up
+      remDr$findElement(using = "css", ".accept-container .btn-primary")$clickElement() # accept cookies 
+    }  
     
     # switch to download tab
     remDr$findElement(using = "css", "#download-tab")$clickElement()
@@ -134,29 +144,53 @@ roper_download <- function(file_id,
       `[[`(1) %>% 
       paste0("#", .)
     
+    download_files <- remDr$getPageSource()[[1]] %>% 
+      stringr::str_extract_all('(?<=\\()[^)]+\\.[a-z]{3,4}(?=\\))') %>% 
+      `[[`(1)
+    
     # download all files
     for (j in seq_along(download_links)) {
       new_dd_old <- list.files(default_dir)
       remDr$findElement(using = "css", download_links[j])$clickElement() # initiate data download
       Sys.sleep(delay * .61)
       
-      if (try(unlist(remDr$findElement(using = "css", "#rc-downloads-tc-modal-accept-btn")$getElementAttribute('id')), silent = TRUE) == "rc-downloads-tc-modal-accept-btn") { # check for terms pop-up
+      element <- try(unlist(remDr$findElement(using = "css", "#rc-downloads-tc-modal-accept-btn")$getElementAttribute('id')), silent = TRUE)
+      if (element == "rc-downloads-tc-modal-accept-btn") { # check for terms pop-up
         remDr$findElement(using = "css", "#rc-downloads-tc-modal-accept-btn")$clickElement() # accept terms 
       }
       
       # check that download has completed
       dd_new <- setdiff(list.files(default_dir), new_dd_old)
+      
+      jj = 0
       tryCatch(
-        while(all.equal(stringr::str_detect(dd_new, "\\.part$"), logical(0))) { # has download started?
-          Sys.sleep(1)
+        while(length(dd_new) == 0) { # has download started?
+          Sys.sleep(abs(rnorm(1)))
           dd_new <- setdiff(list.files(default_dir), new_dd_old)
+          message("waiting for download to start")
+          if (jj < 10)
+            jj = jj + 1
+          else {
+            message("attempting to start download again")
+            remDr$findElement(using = "css", download_links[j])$clickElement() # initiate data download
+            Sys.sleep(sum(abs(rnorm(delay))))
+            
+            element <- try(unlist(remDr$findElement(using = "css", "#rc-downloads-tc-modal-accept-btn")$getElementAttribute('id')), silent = TRUE)
+            if (element == "rc-downloads-tc-modal-accept-btn") { # check for terms pop-up
+              remDr$findElement(using = "css", "#rc-downloads-tc-modal-accept-btn")$clickElement() # accept terms 
+              Sys.sleep(1)
+            }
+            Sys.sleep(abs(rnorm(1)))
+            jj = 0
+          }
         }, error = function(e) 1
       )
-      while(any(stringr::str_detect(dd_new, "\\.crdownload$"))) { # has download finished?
+      while(any(stringr::str_detect(dd_new, "\\.part$"))) { # has download finished?
         Sys.sleep(1)
         dd_new <- setdiff(list.files(default_dir), new_dd_old)
+        message("waiting for download to finish")
       }
-      Sys.sleep(5)
+      Sys.sleep(sum(abs(rnorm(delay*2))))
     }
     dd_new <- setdiff(list.files(default_dir), dd_old)
     

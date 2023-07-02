@@ -12,8 +12,6 @@
 #' @param respondent_pattern For use when the file does not contain a line for every card for every respondent (or contains extra lines that correspond to no respondent), a regular expression that matches the file's respondent identifier; e.g., if the respondent number is stored in the first four digits of each line, preceded by a space, "(?<=^\\s)\\d{4}".
 #'
 #' @details Many older Roper Center datasets are available only in ASCII format, which is notoriously difficult to work with.  The `read_ascii` function facilitates the process of extracting selected variables from ASCII datasets. For single-card files, one can simply identify the names, positions, and widths of the needed variables from the codebook and pass them to \code{read_ascii}'s \code{var_names}, \code{var_positions}, and \code{var_widths} arguments.  Multicard datasets are more complicated. In the best case, the file contains one line per card per respondent; then, the user can extract the needed variables by adding only the \code{var_cards} and \code{total_cards} arguments. When this condition is violated---there is not a line for every card for every respondent, or there are extra lines---the function will throw an error and request the user specify the additional arguments \code{card_pattern} and \code{respondent_pattern}.
-#' 
-#' See \code{\link[readroper]{read_rpr}} for an alternate implementation.
 #'
 #' @return A data frame containing any variables specified in the \code{var_names} argument, plus a numeric \code{respondent} identifier and as many string \code{card} variables (\code{card1}, \code{card2}, ...) as specified by the \code{total_cards} argument.
 #'
@@ -51,9 +49,10 @@
 #' 
 #' @importFrom readr read_lines parse_guess
 #' @importFrom tibble as_tibble
-#' @importFrom dplyr '%>%' mutate filter
-#' @importFrom tidyr spread
-#' @importFrom stringr str_extract str_replace
+#' @importFrom dplyr '%>%' mutate filter select summarise group_by if_else row_number first
+#' @importFrom tidyr spread fill separate pivot_longer nest
+#' @importFrom stringr str_extract str_replace str_trim str_replace_all str_c
+#' @importFrom purrr as_vector
 #' 
 #' @export
 read_ascii <- function(file,
@@ -64,9 +63,9 @@ read_ascii <- function(file,
                        var_widths,
                        card_pattern,
                        respondent_pattern) {
-
+  
   . <- value <- NULL   # satisfy R CMD check
-     
+  
   if ((length(read_lines(file)) %% total_cards) != 0 & (missing(card_pattern) | missing(respondent_pattern))) {
     stop("The number of lines in the file is not a multiple of the number of cards in the file.  Please specify card_pattern and respondent_pattern", call. = FALSE)
   }
@@ -74,22 +73,22 @@ read_ascii <- function(file,
   if (length(var_cards) == 1 & !missing(var_names)) {
     var_cards = rep(var_cards, length(var_names))
   }
-
+  
   if (missing(card_pattern)) {
     df <- read_lines(file) %>%
       as_tibble() %>%
-      mutate(card = paste0("card", rep_len(seq_len(total_cards), nrow(.))),
-             respondent = rep(seq(to = nrow(.)/total_cards), each = total_cards)) %>%
+      dplyr::mutate(card = paste0("card", rep_len(seq_len(total_cards), nrow(.))),
+                    respondent = rep(seq(to = nrow(.)/total_cards), each = total_cards)) %>%
       spread(key = "card", value = "value")
   } else {
     df <- read_lines(file) %>%
       as_tibble() %>% 
-      mutate(card = paste0("card", str_extract(value, card_pattern))) %>% 
+      dplyr::mutate(card = paste0("card", str_extract(value, card_pattern))) %>% 
       filter(!card == "cardNA") %>% 
-      mutate(respondent = str_extract(value, respondent_pattern)) %>%
+      dplyr::mutate(respondent = str_extract(value, respondent_pattern)) %>%
       spread(key = "card", value = "value")
   }
-
+  
   if (!missing(var_names)) {
     if (missing(var_positions) | missing(var_widths)) {
       stop("Variable positions and widths should also be given when variable names are specified", call. = FALSE)
@@ -106,7 +105,9 @@ read_ascii <- function(file,
                                                     paste0("^.{", var_positions[i] - 1, "}(.{", var_widths[i], "}).*"),
                                                     "\\1") %>% 
                                           str_replace("^\\s+$", ""))
-      is.na(df[[var_names[i]]]) <- which(!nchar(df[[var_names[i]]]) == var_widths[i])
+      if (var_widths[i] < 4) {
+        is.na(df[[var_names[i]]]) <- which(!nchar(df[[var_names[i]]]) == var_widths[i])
+      }
     }
   }
   
